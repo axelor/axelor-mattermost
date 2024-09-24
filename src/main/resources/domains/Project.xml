@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<domain-models xmlns="http://axelor.com/xml/ns/domain-models"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://axelor.com/xml/ns/domain-models http://axelor.com/xml/ns/domain-models/domain-models_7.0.xsd">
+
+  <module name="project" package="com.axelor.apps.project.db"/>
+
+  <entity name="Project">
+
+    <integer name="chatVisibilitySelect" title="Chat visibility"
+      selection="project.chat.visibility" default="1"/>
+    <string name="mattermostChannelId" title="Mattermost channel id"/>
+    <extra-code>
+  		<![CDATA[
+  		//CHAT VISIBILITY SELECT
+  			public static final int CHAT_VISIBILITY_NO_CHAT = 1;
+  			public static final int CHAT_VISIBILITY_INTERNAL_CHAT = 2;
+  			public static final int CHAT_VISIBILITY_CUSTOMER_CHAT = 3;
+  		]]>
+    </extra-code>
+  </entity>
+
+</domain-models>

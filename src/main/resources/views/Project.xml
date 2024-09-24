@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_7.1.xsd">
+
+  <form name="project-form" title="Project" model="com.axelor.apps.project.db.Project"
+    extension="true" id="mattermost-project-form">
+    <extend target="/">
+      <attribute name="onSave" value="action-project-group-on-save"/>
+    </extend>
+    <extend target="//field[@name='parentProject']">
+      <insert position="after">
+        <field name="chatVisibilitySelect"/>
+        <field name="mattermostChannelId" readonly="true" hidden="true"/>
+      </insert>
+    </extend>
+  </form>
+
+  <action-group name="action-project-group-on-save">
+    <action name="action-project-method-check-resource-availibility"/>
+    <action name="save"/>
+    <action name="action-project-method-sync-mattermost"/>
+  </action-group>
+
+  <action-method name="action-project-method-sync-mattermost">
+    <call class="com.axelor.apps.mattermost.mattermost.web.MattermostRestController"
+      method="syncProject"/>
+  </action-method>
+
+</object-views>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://axelor.com/xml/ns/object-views https://axelor.com/xml/ns/object-views/object-views_7.0.xsd">
+
+  <form name="app-mattermost-config-form" title="App mattermost"
+    model="com.axelor.studio.db.AppMattermost" width="large" canDelete="false" canNew="false"
+    canCopy="false">
+
+    <panel name="mainPanel">
+      <field name="mattermostToken"/>
+      <field name="mattermostUrl"/>
+      <field name="tenantName" readonlyIf="teamId"/>
+      <field name="teamId" readonly="true"/>
+      <button name="initializeMattermost" title="Initialize mattermost"
+        onClick="save,action-method-initialize-mattemost"/>
+    </panel>
+  </form>
+
+  <form model="com.axelor.utils.db.Wizard" title="Mattermost" name="wizard-view-mattermost"
+    width="large" canSave="false" canEdit="false" canNew="false" canAttach="false" canDelete="false"
+    canArchive="false" canCopy="false" onLoad="action-wizard-attrs-set-mattermost-url">
+    <panel name="mainPanel" itemSpan="12">
+      <field name="$mattermost" showTitle="false" readonly="true">
+        <viewer depends="$mattermostUrl"><![CDATA[
+	      <>
+		      <Box as="iframe" height="700" border="0" src={$mattermostUrl}></Box>
+	      </>
+    ]]></viewer>
+      </field>
+    </panel>
+  </form>
+
+  <action-method name="action-method-initialize-mattemost">
+    <call class="com.axelor.apps.mattermost.project.web.ProjectFixController"
+      method="initializeMattermost"/>
+  </action-method>
+
+  <action-attrs name="action-wizard-attrs-set-mattermost-url">
+    <attribute name="value" for="$mattermostUrl"
+      expr="eval: __repo__(AppMattermost).all().fetchOne().getMattermostUrl() +'/' + __repo__(AppMattermost).all().fetchOne().getTenantName()"/>
+  </action-attrs>
+
+</object-views>

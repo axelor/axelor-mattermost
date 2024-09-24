@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_7.1.xsd">
+
+  <form name="user-form" title="User" model="com.axelor.auth.db.User" extension="true"
+    id="mattermost-user-form">
+    <extend target="/">
+      <attribute name="onSave" value="action-user-group-on-save"/>
+    </extend>
+    <extend target="//field[@name='blocked']">
+      <insert position="before">
+        <field name="canAccessChat"/>
+      </insert>
+    </extend>
+  </form>
+
+  <action-group name="action-user-group-on-save">
+    <action name="action-user-method-validate"/>
+    <action name="action-user-method-update-mattermost"/>
+  </action-group>
+
+  <action-method name="action-user-method-validate">
+    <call class="com.axelor.apps.base.web.UserController" method="validate"/>
+  </action-method>
+
+  <action-method name="action-user-method-update-mattermost">
+    <call class="com.axelor.apps.mattermost.user.web.UserController" method="updateMattermost"/>
+  </action-method>
+
+</object-views>

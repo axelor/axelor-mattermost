@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<object-views xmlns="http://axelor.com/xml/ns/object-views"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_6.1.xsd">
+
+  <menuitem title="Mattermost" name="menu-project-root-mattermost"
+    parent="menu-project-root" action="action.project.root.mattermost"/>
+
+  <action-view name="action.project.root.mattermost" title="Mattermost"
+    model="com.axelor.utils.db.Wizard">
+    <view type="form" name="wizard-view-mattermost"/>
+  </action-view>
+
+</object-views>

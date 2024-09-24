@@ -1,0 +1,8 @@
+---
+name: Mattermost
+code: mattermost
+typeSelect: enterprise
+installOrder: 5000
+description: |
+  Mattermost configuration
+image: mattermost.png

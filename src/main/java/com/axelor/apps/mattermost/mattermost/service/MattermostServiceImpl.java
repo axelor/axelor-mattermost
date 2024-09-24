@@ -1,0 +1,387 @@
+package com.axelor.apps.mattermost.mattermost.service;
+
+import com.axelor.apps.base.AxelorException;
+import com.axelor.apps.base.db.Partner;
+import com.axelor.apps.base.db.repo.PartnerRepository;
+import com.axelor.apps.base.db.repo.TraceBackRepository;
+import com.axelor.apps.base.service.exception.TraceBackService;
+import com.axelor.apps.mattermost.app.service.AppMattermostService;
+import com.axelor.apps.mattermost.exception.MattermostExceptionMessage;
+import com.axelor.apps.mattermost.mattermost.MattermostRestChannel;
+import com.axelor.apps.mattermost.mattermost.MattermostRestLinker;
+import com.axelor.apps.mattermost.mattermost.MattermostRestTeam;
+import com.axelor.apps.mattermost.mattermost.MattermostRestUser;
+import com.axelor.apps.project.db.Project;
+import com.axelor.apps.project.db.repo.ProjectRepository;
+import com.axelor.auth.db.User;
+import com.axelor.auth.db.repo.UserRepository;
+import com.axelor.common.ObjectUtils;
+import com.axelor.i18n.I18n;
+import com.axelor.message.db.EmailAddress;
+import com.axelor.studio.db.AppMattermost;
+import com.axelor.studio.db.repo.AppMattermostRepository;
+import com.google.inject.Inject;
+import com.google.inject.persist.Transactional;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.http.client.ClientProtocolException;
+import wslite.json.JSONException;
+
+public class MattermostServiceImpl implements MattermostService {
+
+  protected final AppMattermostService appMattermostService;
+  protected final ProjectRepository projectRepository;
+  protected final UserRepository userRepository;
+  protected final PartnerRepository partnerRepository;
+  protected final AppMattermostRepository appMattermostRepository;
+  protected String url;
+  protected String token;
+  protected String teamId;
+
+  @Inject
+  public MattermostServiceImpl(
+      AppMattermostService appMattermostService,
+      ProjectRepository projectRepository,
+      UserRepository userRepository,
+      PartnerRepository partnerRepository,
+      AppMattermostRepository appMattermostRepository) {
+    this.appMattermostService = appMattermostService;
+    this.projectRepository = projectRepository;
+    this.userRepository = userRepository;
+    this.partnerRepository = partnerRepository;
+    this.appMattermostRepository = appMattermostRepository;
+  }
+
+  public void initialize() throws AxelorException {
+    getUrl();
+    getAuthentificationToken();
+  }
+
+  @Override
+  @Transactional(rollbackOn = Exception.class)
+  public void syncProject(Project project) {
+    try {
+      initialize();
+      getTeamId();
+      if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_NO_CHAT) {
+        removeChannel(project);
+        project.setMattermostChannelId(null);
+        return;
+      }
+      if (ObjectUtils.isEmpty(project.getMattermostChannelId())) {
+        project.setMattermostChannelId(createChannel(project));
+      } else {
+        updateProjectName(project);
+      }
+      Collection<User> userCollection = project.getMembersUserSet();
+      createUsers(project, userCollection);
+      if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_CUSTOMER_CHAT
+          && project.getClientPartner() != null) {
+        createUsers(project.getClientPartner());
+      }
+      linkUsersToTeamAndChannel(project);
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
+    }
+  }
+
+  protected void createUsers(Project project, Collection<User> userCollection)
+      throws AxelorException {
+    for (User user : userCollection) {
+      if (!user.getCanAccessChat() || ObjectUtils.notEmpty(user.getMattermostUserId())) {
+        continue;
+      }
+      checkMail(user);
+      String email = user.getEmail();
+      String userId =
+          new MattermostRestUser(url, token)
+              .createUser(user.getId(), email, user.getName(), "", email);
+      if (ObjectUtils.isEmpty(userId)) {
+        continue;
+      }
+      user.setMattermostUserId(userId);
+      saveUser(user);
+    }
+  }
+
+  @Transactional(rollbackOn = Exception.class)
+  protected void saveUser(User user) {
+
+    userRepository.save(user);
+  }
+
+  @Transactional(rollbackOn = Exception.class)
+  protected void savePartner(Partner partner) {
+
+    partnerRepository.save(partner);
+  }
+
+  @Transactional(rollbackOn = Exception.class)
+  protected void saveAppMattermost(AppMattermost appMattermost) {
+
+    appMattermostRepository.save(appMattermost);
+  }
+
+  protected void createUsers(Partner customer) throws AxelorException {
+
+    checkMailAddress(customer);
+    String email = customer.getEmailAddress().getAddress();
+    if (ObjectUtils.isEmpty(customer.getMattermostUserId())) {
+      String userId =
+          new MattermostRestUser(url, token)
+              .createUser(
+                  customer.getId(), email, customer.getFirstName(), customer.getName(), email);
+      if (ObjectUtils.notEmpty(userId)) {
+        customer.setMattermostUserId(userId);
+      }
+      savePartner(customer);
+    }
+
+    Set<Partner> contactSet = customer.getContactPartnerSet();
+    if (CollectionUtils.isEmpty(contactSet)) {
+      return;
+    }
+    for (Partner partner : contactSet) {
+      createUsers(partner);
+    }
+  }
+
+  @Override
+  public void createTeam() throws AxelorException {
+
+    initialize();
+    AppMattermost appMattermost = appMattermostService.getAppMattermost();
+    if (ObjectUtils.notEmpty(appMattermost.getTeamId())) {
+      return;
+    }
+    String teamName = appMattermost.getTenantName();
+    if (ObjectUtils.isEmpty(teamName)) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          I18n.get(MattermostExceptionMessage.MATTERMOST_API_MISSING_TENANT_NAME));
+    }
+    String teamId = new MattermostRestTeam(url, token).createTeam(teamName);
+    appMattermost.setTeamId(teamId);
+    saveAppMattermost(appMattermost);
+  }
+
+  protected String createChannel(Project project) throws AxelorException {
+    if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_NO_CHAT) {
+      return null;
+    }
+
+    checkProject(project);
+    String name = project.getName();
+
+    return new MattermostRestChannel(url, token).createChannel(teamId, name);
+  }
+
+  protected void linkUsersToTeamAndChannel(Project project) throws AxelorException {
+    if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_NO_CHAT) {
+      return;
+    }
+
+    checkProject(project);
+    String channelId = project.getMattermostChannelId();
+
+    Collection<User> collectionUser = project.getMembersUserSet();
+    MattermostRestLinker mattermostRestLinker = new MattermostRestLinker(url, token);
+    List<String> userIDs = new ArrayList<String>();
+    for (User user : collectionUser) {
+      try {
+        if (!user.getCanAccessChat()) {
+          removeUserFromChannel(project, user);
+          continue;
+        }
+        userIDs.add(user.getMattermostUserId());
+        mattermostRestLinker.linkUsersToTeamAndChannel(
+            user.getMattermostUserId(), teamId, channelId);
+      } catch (Exception e) {
+        TraceBackService.trace(e, "mattermost");
+      }
+    }
+    if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_INTERNAL_CHAT) {
+      removeNotFoundUsers(userIDs, project);
+      return;
+    }
+    Partner customer = project.getClientPartner();
+    if (customer == null) {
+      return;
+    }
+    try {
+      checkMailAddress(customer);
+
+      userIDs.add(customer.getMattermostUserId());
+      mattermostRestLinker.linkUsersToTeamAndChannel(
+          customer.getMattermostUserId(), teamId, channelId);
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
+    }
+    Set<Partner> contactSet = customer.getContactPartnerSet();
+    if (CollectionUtils.isEmpty(contactSet)) {
+      return;
+    }
+    for (Partner partner : contactSet) {
+      try {
+        checkMailAddress(partner);
+
+        userIDs.add(partner.getMattermostUserId());
+        mattermostRestLinker.linkUsersToTeamAndChannel(
+            partner.getMattermostUserId(), teamId, channelId);
+      } catch (Exception e) {
+        TraceBackService.trace(e, "mattermost");
+      }
+    }
+    removeNotFoundUsers(userIDs, project);
+  }
+
+  public void removeNotFoundUsers(List<String> userIDs, Project project) {
+    try {
+      List<String> foundUserIds =
+          new MattermostRestChannel(url, token).getMemberList(project.getMattermostChannelId());
+      for (String id : foundUserIds) {
+        if (!userIDs.contains(id)) {
+          User user = userRepository.findByMattermostUserId(id);
+          if (user == null) {
+            continue;
+          }
+          removeUserFromChannel(project, user);
+        }
+      }
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
+    }
+  }
+
+  protected void checkMail(User user) throws AxelorException {
+
+    if (ObjectUtils.isEmpty(user.getEmail())) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          MattermostExceptionMessage.MATTERMOST_MISSING_MAIL_ON_USER,
+          user.getCode());
+    }
+  }
+
+  protected void checkMailAddress(Partner partner) throws AxelorException {
+    EmailAddress emailAddress = partner.getEmailAddress();
+    if (emailAddress == null || ObjectUtils.isEmpty(emailAddress.getAddress())) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          MattermostExceptionMessage.MATTERMOST_MISSING_MAIL_ON_PARTNER,
+          partner.getFullName());
+    }
+  }
+
+  protected void checkProject(Project project) throws AxelorException {
+
+    String name = project.getName();
+    if (ObjectUtils.isEmpty(name)) {
+
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          MattermostExceptionMessage.MATTERMOST_MISSING_NAME_ON_PROJECT,
+          project.getCode());
+    }
+  }
+
+  protected void removeChannel(Project project) throws AxelorException {
+    new MattermostRestChannel(url, token).deleteChannel(project.getMattermostChannelId());
+  }
+
+  @Override
+  public void updateChannelForUser(User user, boolean canAccessChat) throws AxelorException {
+
+    getUrl();
+    getAuthentificationToken();
+    List<Project> projectWithUser =
+        projectRepository
+            .all()
+            .filter(":user MEMBER OF self.membersUserSet AND self.chatVisibilitySelect > 1")
+            .bind("user", user)
+            .fetch();
+    if (CollectionUtils.isEmpty(projectWithUser)) {
+      return;
+    }
+    for (Project project : projectWithUser) {
+      try {
+        if (!canAccessChat) {
+          removeUserFromChannel(project, user);
+        } else {
+          addUserToChannel(project, user);
+        }
+      } catch (Exception e) {
+        TraceBackService.trace(e, "mattermost");
+      }
+    }
+  }
+
+  protected void addUserToChannel(Project project, User user) throws AxelorException {
+    initialize();
+    getTeamId();
+    checkMail(user);
+    new MattermostRestLinker(url, token)
+        .linkUser(user.getMattermostUserId(), teamId, project.getMattermostChannelId());
+  }
+
+  protected void removeUserFromChannel(Project project, User user) throws AxelorException {
+
+    initialize();
+    checkMail(user);
+    checkProject(project);
+    new MattermostRestLinker(url, token)
+        .unlinkUser(user.getMattermostUserId(), project.getMattermostChannelId());
+  }
+
+  @Override
+  public void updateUser(User user, String name)
+      throws AxelorException, ClientProtocolException, IOException, JSONException {
+    initialize();
+    checkMail(user);
+    new MattermostRestUser(url, token)
+        .updateUser(user.getId(), user.getEmail(), name, "", user.getMattermostUserId());
+  }
+
+  protected void updateProjectName(Project project)
+      throws ClientProtocolException, AxelorException, IOException, JSONException {
+    String name = project.getName();
+    new MattermostRestChannel(url, token).updateChannel(name, project.getMattermostChannelId());
+  }
+
+  protected void getAuthentificationToken() throws AxelorException {
+    AppMattermost appMattermost = appMattermostService.getAppMattermostNoFlush();
+    String identificationToken = appMattermost.getMattermostToken();
+    if (ObjectUtils.isEmpty(identificationToken)) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          I18n.get(MattermostExceptionMessage.MATTERMOST_API_MISSING_IDENTIFICATION_TOKEN));
+    }
+    this.token = identificationToken;
+  }
+
+  protected void getUrl() throws AxelorException {
+    AppMattermost appMattermost = appMattermostService.getAppMattermostNoFlush();
+    String url = appMattermost.getMattermostUrl();
+    if (ObjectUtils.isEmpty(url)) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          I18n.get(MattermostExceptionMessage.MATTERMOST_API_MISSING_URL));
+    }
+    this.url = url;
+  }
+
+  protected void getTeamId() throws AxelorException {
+    AppMattermost appMattermost = appMattermostService.getAppMattermostNoFlush();
+    String teamId = appMattermost.getTeamId();
+    if (ObjectUtils.isEmpty(url)) {
+      throw new AxelorException(
+          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
+          I18n.get(MattermostExceptionMessage.MATTERMOST_API_MISSING_TEAM_ID));
+    }
+    this.teamId = teamId;
+  }
+}
