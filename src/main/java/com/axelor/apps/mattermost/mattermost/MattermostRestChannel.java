@@ -56,7 +56,10 @@ public class MattermostRestChannel extends MattermostRest {
   }
 
   protected String createChannel(String channelDisplayName, String channelName, String teamId)
-      throws UnsupportedCharsetException, ClientProtocolException, IOException, AxelorException,
+      throws UnsupportedCharsetException,
+          ClientProtocolException,
+          IOException,
+          AxelorException,
           JSONException {
 
     JSONObject jsonObject = createChannelJsonObject(channelDisplayName, channelName, teamId);
