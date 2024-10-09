@@ -8,12 +8,13 @@
     canCopy="false">
 
     <panel name="mainPanel">
-      <field name="mattermostToken"/>
       <field name="mattermostUrl"/>
       <field name="tenantName" readonlyIf="teamId"/>
+      <field name="mattermostToken" hideIf="teamId"/>
+      <spacer/>
       <field name="teamId" readonly="true"/>
       <button name="initializeMattermost" title="Initialize mattermost"
-        onClick="save,action-method-initialize-mattemost"/>
+        onClick="save,action-method-initialize-mattemost" hideIf="teamId"/>
     </panel>
   </form>
 
@@ -32,7 +33,7 @@
   </form>
 
   <action-method name="action-method-initialize-mattemost">
-    <call class="com.axelor.apps.mattermost.project.web.ProjectFixController"
+    <call class="com.axelor.apps.portal.project.web.ProjectFixController"
       method="initializeMattermost"/>
   </action-method>
 

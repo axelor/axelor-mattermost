@@ -3,8 +3,8 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_6.1.xsd">
 
-  <menuitem title="Mattermost" name="menu-project-root-mattermost"
-    parent="menu-project-root" action="action.project.root.mattermost"/>
+  <menuitem title="Mattermost" name="mattermost-root" icon="chat-dots"
+    tag-get="com.axelor.apps.portal.user.web.UserController:countUnread()" order="-2150"/>
 
   <action-view name="action.project.root.mattermost" title="Mattermost"
     model="com.axelor.utils.db.Wizard">

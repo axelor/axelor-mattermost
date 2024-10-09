@@ -51,6 +51,10 @@ public abstract class MattermostRest {
   protected static final String UPDATE_TEAM_END_POINT = "/api/v4/teams/{team_id}/patch";
   protected static final String UPDATE_CHANNEL_END_POINT = "/api/v4/channels/{channel_id}/patch";
   protected static final String UPDATE_USER_END_POINT = "/api/v4/users/{user_id}/patch";
+  protected static final String DELETE_USER_END_POINT = "/api/v4/users/{user_id}?permanent=true";
+  protected static final String UNREAD_MSG_BY_TEAM_END_POINT =
+      "/api/v4/users/{user_id}/teams/unread";
+  protected static final String LOGIN_END_POINT = "/api/v4/users/login";
 
   protected String url;
   protected String token;

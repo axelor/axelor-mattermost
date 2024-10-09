@@ -8,8 +8,7 @@
   <entity name="User" sequential="true">
 
     <boolean name="canAccessChat" title="Can access chat"/>
-    <string name="mattermostUserId" title="Mattermost user id"/>
-    <finder-method name="findByMattermostUserId" using="mattermostUserId"/>
+    <string name="mattermostUserId" title="Mattermost user id" unique="true"/>
 
   </entity>
 

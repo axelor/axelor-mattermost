@@ -54,6 +54,12 @@ public class MattermostRestUser extends MattermostRest {
     return getIdFromResponse(getCall(url));
   }
 
+  public boolean deleteUser(String userId) throws AxelorException, IOException, JSONException {
+    createHttpClient();
+    String url = getUrl(DELETE_USER_END_POINT.replace("{user_id}", userId));
+    return checkDeleteResponse(deleteCall(url));
+  }
+
   protected JSONObject createUserJsonObject(
       Long id, String firstName, String name, String password, String email) throws JSONException {
     JSONObject jsonObject = new JSONObject();

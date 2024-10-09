@@ -1,9 +1,13 @@
 package com.axelor.apps.mattermost.project.fix;
 
 import com.axelor.apps.base.AxelorException;
+import com.axelor.apps.base.db.Partner;
+import com.axelor.apps.base.db.repo.PartnerRepository;
 import com.axelor.apps.mattermost.mattermost.service.MattermostService;
 import com.axelor.apps.project.db.Project;
 import com.axelor.apps.project.db.repo.ProjectRepository;
+import com.axelor.auth.db.User;
+import com.axelor.auth.db.repo.UserRepository;
 import com.axelor.db.JPA;
 import com.axelor.db.Query;
 import com.google.inject.Inject;
@@ -17,18 +21,49 @@ public class ProjectFix {
 
   protected final ProjectRepository projectRepository;
   protected final MattermostService matterMostService;
+  protected final UserRepository userRepository;
+  protected final PartnerRepository partnerRepository;
   protected static final int FETCH_LIMIT = 10;
   protected static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Inject
-  public ProjectFix(ProjectRepository projectRepository, MattermostService matterMostService) {
+  public ProjectFix(
+      ProjectRepository projectRepository,
+      MattermostService matterMostService,
+      UserRepository userRepository,
+      PartnerRepository partnerRepository) {
     this.projectRepository = projectRepository;
     this.matterMostService = matterMostService;
+    this.userRepository = userRepository;
+    this.partnerRepository = partnerRepository;
   }
 
   public void initializeMattermost() throws AxelorException {
 
     matterMostService.createTeam();
+    createUsers();
+    createPartners();
+    createProject();
+  }
+
+  private void createPartners() {
+    Query<Partner> partnerQuery =
+        partnerRepository
+            .all()
+            .filter("(self.archived is null OR self.archived = false) AND self.isCustomer = true")
+            .order("id");
+    List<Partner> partnerList = new ArrayList<Partner>();
+    int OFFSET = 0;
+    long partnerToUpdate = partnerQuery.count();
+    while (!(partnerList = partnerQuery.fetch(FETCH_LIMIT, OFFSET)).isEmpty()) {
+      partnerList.forEach(matterMostService::createUsers);
+      JPA.clear();
+      OFFSET += partnerList.size();
+      LOG.debug("Done " + OFFSET + "/" + partnerToUpdate);
+    }
+  }
+
+  protected void createProject() {
     Query<Project> projectQuery =
         projectRepository
             .all()
@@ -42,6 +77,23 @@ public class ProjectFix {
       JPA.clear();
       OFFSET += projectList.size();
       LOG.debug("Done " + OFFSET + "/" + projectToUpdate);
+    }
+  }
+
+  protected void createUsers() {
+    Query<User> userQuery =
+        userRepository
+            .all()
+            .filter("(self.archived is null OR self.archived = false) AND self.email != null")
+            .order("id");
+    List<User> userList = new ArrayList<User>();
+    int OFFSET = 0;
+    long userToUpdate = userQuery.count();
+    while (!(userList = userQuery.fetch(FETCH_LIMIT, OFFSET)).isEmpty()) {
+      userList.forEach(matterMostService::createUser);
+      JPA.clear();
+      OFFSET += userList.size();
+      LOG.debug("Done " + OFFSET + "/" + userToUpdate);
     }
   }
 }

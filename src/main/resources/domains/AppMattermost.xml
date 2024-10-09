@@ -9,7 +9,7 @@
 
     <one-to-one ref="com.axelor.studio.db.App" name="app"/>
     <string name="mattermostUrl" title="Url mattermost"/>
-    <string name="mattermostToken" title="Token mattermost"/>
+    <string name="mattermostToken" password="true" title="Token mattermost"/>
     <string name="tenantName" title="Tenant name"/>
     <string name="teamId" title="Team id"/>
   </entity>
