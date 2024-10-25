@@ -1,7 +1,14 @@
 package com.axelor.apps.mattermost.mattermost.service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.http.client.ClientProtocolException;
+
 import com.axelor.apps.base.AxelorException;
-import com.axelor.apps.base.db.Partner;
 import com.axelor.apps.base.db.repo.TraceBackRepository;
 import com.axelor.apps.base.service.exception.TraceBackService;
 import com.axelor.apps.mattermost.app.service.AppMattermostService;
@@ -18,18 +25,11 @@ import com.axelor.db.JPA;
 import com.axelor.db.Query;
 import com.axelor.db.tenants.TenantResolver;
 import com.axelor.i18n.I18n;
-import com.axelor.message.db.EmailAddress;
 import com.axelor.studio.db.AppMattermost;
 import com.axelor.studio.db.repo.AppMattermostRepository;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.http.client.ClientProtocolException;
+
 import wslite.json.JSONException;
 
 public class MattermostServiceImpl implements MattermostService {
@@ -70,10 +70,6 @@ public class MattermostServiceImpl implements MattermostService {
       }
       Collection<User> userCollection = project.getMembersUserSet();
       createUsers(userCollection);
-      if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_CUSTOMER_CHAT
-          && project.getClientPartner() != null) {
-        createUsers(project.getClientPartner());
-      }
       linkUsersToTeamAndChannel(project);
     } catch (Exception e) {
       TraceBackService.trace(e, "mattermost");
@@ -115,45 +111,11 @@ public class MattermostServiceImpl implements MattermostService {
   }
 
   @Transactional(rollbackOn = Exception.class)
-  protected void savePartner(Partner partner) {
-
-    JPA.save(partner);
-  }
-
-  @Transactional(rollbackOn = Exception.class)
   protected void saveAppMattermost(AppMattermost appMattermost) {
 
     appMattermostRepository.save(appMattermost);
   }
 
-  @Override
-  public void createUsers(Partner customer) {
-    try {
-      initialize();
-      checkMailAddress(customer);
-      String email = customer.getEmailAddress().getAddress();
-      if (ObjectUtils.isEmpty(customer.getMattermostUserId())) {
-        String userId =
-            new MattermostRestUser(url, token)
-                .createUser(
-                    customer.getId(), email, customer.getFirstName(), customer.getName(), email);
-        if (ObjectUtils.notEmpty(userId)) {
-          customer.setMattermostUserId(userId);
-        }
-        savePartner(customer);
-      }
-
-      Set<Partner> contactSet = customer.getContactPartnerSet();
-      if (CollectionUtils.isEmpty(contactSet)) {
-        return;
-      }
-      for (Partner partner : contactSet) {
-        createUsers(partner);
-      }
-    } catch (Exception e) {
-      TraceBackService.trace(e, "mattermost");
-    }
-  }
 
   @Override
   public void createTeam() throws AxelorException {
@@ -212,41 +174,8 @@ public class MattermostServiceImpl implements MattermostService {
         TraceBackService.trace(e, "mattermost");
       }
     }
-    if (project.getChatVisibilitySelect() == ProjectRepository.CHAT_VISIBILITY_INTERNAL_CHAT) {
       removeNotFoundUsers(userIDs, project);
       return;
-    }
-    Partner customer = project.getClientPartner();
-    if (customer == null) {
-      return;
-    }
-    try {
-      checkMailAddress(customer);
-      if (customer.getCanAccessChat()) {
-        userIDs.add(customer.getMattermostUserId());
-        mattermostRestLinker.linkUsersToTeamAndChannel(
-            customer.getMattermostUserId(), teamId, channelId);
-      }
-    } catch (Exception e) {
-      TraceBackService.trace(e, "mattermost");
-    }
-    Set<Partner> contactSet = customer.getContactPartnerSet();
-    if (CollectionUtils.isEmpty(contactSet)) {
-      return;
-    }
-    for (Partner partner : contactSet) {
-      try {
-        checkMailAddress(partner);
-        if (partner.getCanAccessChat()) {
-          userIDs.add(partner.getMattermostUserId());
-          mattermostRestLinker.linkUsersToTeamAndChannel(
-              partner.getMattermostUserId(), teamId, channelId);
-        }
-      } catch (Exception e) {
-        TraceBackService.trace(e, "mattermost");
-      }
-    }
-    removeNotFoundUsers(userIDs, project);
   }
 
   public void removeNotFoundUsers(List<String> userIDs, Project project) {
@@ -256,8 +185,7 @@ public class MattermostServiceImpl implements MattermostService {
       for (String id : foundUserIds) {
         if (!userIDs.contains(id)) {
           User user = findUserByMattermostId(id);
-          Partner partner = findPartnerByMattermostId(id);
-          if (user == null && partner == null) {
+          if (user == null) {
             continue;
           }
           removeUserFromChannel(project, id);
@@ -275,13 +203,6 @@ public class MattermostServiceImpl implements MattermostService {
         .fetchOne();
   }
 
-  protected Partner findPartnerByMattermostId(String mattermostUserId) {
-    return Query.of(Partner.class)
-        .filter("self.mattermostUserId = :mattermostUserId")
-        .bind("mattermostUserId", mattermostUserId)
-        .fetchOne();
-  }
-
   protected void checkMail(User user) throws AxelorException {
 
     if (ObjectUtils.isEmpty(user.getEmail())) {
@@ -289,16 +210,6 @@ public class MattermostServiceImpl implements MattermostService {
           TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
           MattermostExceptionMessage.MATTERMOST_MISSING_MAIL_ON_USER,
           user.getCode());
-    }
-  }
-
-  protected void checkMailAddress(Partner partner) throws AxelorException {
-    EmailAddress emailAddress = partner.getEmailAddress();
-    if (emailAddress == null || ObjectUtils.isEmpty(emailAddress.getAddress())) {
-      throw new AxelorException(
-          TraceBackRepository.CATEGORY_CONFIGURATION_ERROR,
-          MattermostExceptionMessage.MATTERMOST_MISSING_MAIL_ON_PARTNER,
-          partner.getFullName());
     }
   }
 
@@ -347,42 +258,6 @@ public class MattermostServiceImpl implements MattermostService {
     }
   }
 
-  @Override
-  public void updateChannelForPartner(Partner partner, boolean canAccessChat)
-      throws AxelorException {
-    initialize();
-
-    List<Project> projectWithClientPartner = new ArrayList<Project>();
-    if (partner.getIsCustomer()) {
-      projectWithClientPartner =
-          JPA.all(Project.class)
-              .filter("self.clientPartner = :partner AND self.chatVisibilitySelect > 2")
-              .bind("partner", partner)
-              .fetch();
-    } else if (partner.getIsContact()) {
-      projectWithClientPartner =
-          JPA.all(Project.class)
-              .filter(
-                  ":partner MEMBER OF self.clientPartner.contactPartnerSet AND self.chatVisibilitySelect > 2")
-              .bind("partner", partner)
-              .fetch();
-    }
-    if (CollectionUtils.isEmpty(projectWithClientPartner)) {
-      return;
-    }
-    for (Project project : projectWithClientPartner) {
-      try {
-        if (!canAccessChat) {
-          removeUserFromChannel(project, partner.getMattermostUserId());
-        } else {
-          addUserToChannel(project, partner.getMattermostUserId());
-        }
-      } catch (Exception e) {
-        TraceBackService.trace(e, "mattermost");
-      }
-    }
-  }
-
   protected void addUserToChannel(Project project, String mattermostUserId) throws AxelorException {
     initialize();
     getTeamId();
@@ -411,20 +286,6 @@ public class MattermostServiceImpl implements MattermostService {
     checkMail(user);
     new MattermostRestUser(url, token)
         .updateUser(user.getId(), user.getEmail(), name, "", user.getMattermostUserId());
-  }
-
-  @Override
-  public void updatePartner(Partner partner, String name)
-      throws ClientProtocolException, AxelorException, IOException, JSONException {
-    initialize();
-    checkMailAddress(partner);
-    new MattermostRestUser(url, token)
-        .updateUser(
-            partner.getId(),
-            partner.getEmailAddress().getAddress(),
-            name,
-            "",
-            partner.getMattermostUserId());
   }
 
   protected void updateProjectName(Project project)

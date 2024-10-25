@@ -15,7 +15,6 @@
   		//CHAT VISIBILITY SELECT
   			public static final int CHAT_VISIBILITY_NO_CHAT = 1;
   			public static final int CHAT_VISIBILITY_INTERNAL_CHAT = 2;
-  			public static final int CHAT_VISIBILITY_CUSTOMER_CHAT = 3;
   		]]>
     </extra-code>
   </entity>

@@ -1,7 +1,13 @@
 package com.axelor.apps.mattermost.project.fix;
 
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.axelor.apps.base.AxelorException;
-import com.axelor.apps.base.db.Partner;
 import com.axelor.apps.base.db.repo.PartnerRepository;
 import com.axelor.apps.mattermost.mattermost.service.MattermostService;
 import com.axelor.apps.project.db.Project;
@@ -11,11 +17,6 @@ import com.axelor.auth.db.repo.UserRepository;
 import com.axelor.db.JPA;
 import com.axelor.db.Query;
 import com.google.inject.Inject;
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ProjectFix {
 
@@ -42,25 +43,7 @@ public class ProjectFix {
 
     matterMostService.createTeam();
     createUsers();
-    createPartners();
     createProject();
-  }
-
-  private void createPartners() {
-    Query<Partner> partnerQuery =
-        partnerRepository
-            .all()
-            .filter("(self.archived is null OR self.archived = false) AND self.isCustomer = true")
-            .order("id");
-    List<Partner> partnerList = new ArrayList<Partner>();
-    int OFFSET = 0;
-    long partnerToUpdate = partnerQuery.count();
-    while (!(partnerList = partnerQuery.fetch(FETCH_LIMIT, OFFSET)).isEmpty()) {
-      partnerList.forEach(matterMostService::createUsers);
-      JPA.clear();
-      OFFSET += partnerList.size();
-      LOG.debug("Done " + OFFSET + "/" + partnerToUpdate);
-    }
   }
 
   protected void createProject() {

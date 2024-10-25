@@ -6,7 +6,6 @@
   <selection name="project.chat.visibility">
     <option value="1">No chat</option>
     <option value="2">Internal chat</option>
-    <option value="3">Customer chat</option>
   </selection>
 
 </object-views>

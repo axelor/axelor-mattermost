@@ -6,3 +6,7 @@ installOrder: 5000
 description: |
   Mattermost configuration
 image: mattermost.png
+modules: 
+   axelor-mattermost
+dependsOn:
+  - project
