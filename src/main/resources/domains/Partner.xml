@@ -10,6 +10,8 @@
     <string name="mattermostUserId" title="Mattermost channel id" unique="true"/>
     <boolean name="canAccessChat" title="Can access chat"/>
 
+
+    <entity-listener class="com.axelor.apps.mattermost.db.repo.PartnerListener"/>
   </entity>
 
 </domain-models>

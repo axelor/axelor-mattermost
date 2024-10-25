@@ -1,4 +1,4 @@
-package com.axelor.apps.mattermost.partner.web;
+package com.axelor.apps.mattermost.user.web;
 
 import com.axelor.apps.base.db.Partner;
 import com.axelor.apps.base.db.repo.PartnerRepository;

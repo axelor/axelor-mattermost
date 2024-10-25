@@ -35,7 +35,7 @@ dependencies {
 // Publish
 //
 
-apply plugin: 'maven-publish'
+apply plugin: 'maven-publish' 
 
 ext {
 	mavenUsername = project.findProperty( 'axelorMavenUsername' )
