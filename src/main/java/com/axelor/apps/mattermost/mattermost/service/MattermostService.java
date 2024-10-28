@@ -1,13 +1,10 @@
 package com.axelor.apps.mattermost.mattermost.service;
 
-import java.io.IOException;
-
-import org.apache.http.client.ClientProtocolException;
-
 import com.axelor.apps.base.AxelorException;
 import com.axelor.apps.project.db.Project;
 import com.axelor.auth.db.User;
-
+import java.io.IOException;
+import org.apache.http.client.ClientProtocolException;
 import wslite.json.JSONException;
 
 public interface MattermostService {

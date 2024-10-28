@@ -1,13 +1,5 @@
 package com.axelor.apps.mattermost.mattermost.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.http.client.ClientProtocolException;
-
 import com.axelor.apps.base.AxelorException;
 import com.axelor.apps.base.db.repo.TraceBackRepository;
 import com.axelor.apps.base.service.exception.TraceBackService;
@@ -29,7 +21,12 @@ import com.axelor.studio.db.AppMattermost;
 import com.axelor.studio.db.repo.AppMattermostRepository;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.http.client.ClientProtocolException;
 import wslite.json.JSONException;
 
 public class MattermostServiceImpl implements MattermostService {
@@ -116,7 +113,6 @@ public class MattermostServiceImpl implements MattermostService {
     appMattermostRepository.save(appMattermost);
   }
 
-
   @Override
   public void createTeam() throws AxelorException {
 
@@ -174,8 +170,8 @@ public class MattermostServiceImpl implements MattermostService {
         TraceBackService.trace(e, "mattermost");
       }
     }
-      removeNotFoundUsers(userIDs, project);
-      return;
+    removeNotFoundUsers(userIDs, project);
+    return;
   }
 
   public void removeNotFoundUsers(List<String> userIDs, Project project) {

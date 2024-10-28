@@ -4,8 +4,8 @@
   xsi:schemaLocation="http://axelor.com/xml/ns/object-views http://axelor.com/xml/ns/object-views/object-views_7.1.xsd">
 
   <selection name="project.chat.visibility">
-    <option value="1">No chat</option>
-    <option value="2">Internal chat</option>
+    <option value="1" order="1">No chat</option>
+    <option value="2" order="2">Internal chat</option>
   </selection>
 
 </object-views>

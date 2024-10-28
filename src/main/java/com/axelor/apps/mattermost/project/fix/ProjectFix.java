@@ -1,12 +1,5 @@
 package com.axelor.apps.mattermost.project.fix;
 
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.axelor.apps.base.AxelorException;
 import com.axelor.apps.base.db.repo.PartnerRepository;
 import com.axelor.apps.mattermost.mattermost.service.MattermostService;
@@ -17,6 +10,11 @@ import com.axelor.auth.db.repo.UserRepository;
 import com.axelor.db.JPA;
 import com.axelor.db.Query;
 import com.google.inject.Inject;
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProjectFix {
 

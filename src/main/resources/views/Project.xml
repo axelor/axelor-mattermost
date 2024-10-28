@@ -8,13 +8,21 @@
     <extend target="/">
       <attribute name="onSave" value="action-project-group-on-save"/>
     </extend>
-    <extend target="//field[@name='parentProject']">
+  </form>
+
+  <form name="incl-project-structure-panel-form" title="Project"
+    model="com.axelor.apps.project.db.Project" extension="true"
+    id="mattermost-incl-project-structure-panel-form">
+
+    <extend target="//field[@name='assignedTo']">
       <insert position="after">
         <field name="chatVisibilitySelect"/>
         <field name="mattermostChannelId" readonly="true" hidden="true"/>
+        <field name="clientPartner" showIf="chatVisibilitySelect == 3"/>
       </insert>
     </extend>
   </form>
+
 
   <action-group name="action-project-group-on-save">
     <action name="action-project-method-check-resource-availibility"/>
