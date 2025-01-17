@@ -24,7 +24,7 @@ axelor {
 //
 // Dependencies
 //
-ext.aosVersion = '8.2.0-SNAPSHOT'
+ext.aosVersion = '8.2.6'
 
 
 dependencies {
