@@ -22,7 +22,7 @@ cache:
 build:
   stage: build
   script:
-    - ./gradlew -xtest clean build -PaxelorMavenUsername=${NEXUS_READER_USERNAME} -PaxelorMavenPassword=${NEXUS_READER_PASSWORD}
+    - ./gradlew -xtest clean build
 
 .publish_template: &publish_configuration
   stage: publish
