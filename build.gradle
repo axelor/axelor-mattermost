@@ -7,20 +7,44 @@ if(!file("../../gradle/style.gradle").exists()) {
     apply from: 'gradle/style.gradle'
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(11)
+	}
+}
 
-//
-// Axelor module
-//
+group = "com.axelor.apps"
 
 axelor {
 	title "Axelor :: Mattermost"
 	description "Axelor Mattermost"
 }
 
-ext.aosVersion = '8.2.0'
+ext.aosVersion = '8.3.1'
 
 dependencies {
 	api "com.axelor.apps:axelor-project:${aosVersion}"
+}
+
+apply plugin: 'maven-publish'
+
+ext {
+	mavenUsername = project.findProperty( 'axelorMavenUsername' )
+	mavenPassword = project.findProperty( 'axelorMavenPassword' )
+}
+
+publishing {
+	repositories {
+		maven {
+			def repoPath = project.hasProperty("finalRelease")
+					? "maven-releases"
+					: "maven-snapshots";
+			name = "maven"
+			url = "https://repository.axelor.com/nexus/repository/" + repoPath
+			credentials {
+				username = project.mavenUsername
+				password = project.mavenPassword
+			}
+		}
+	}
 }
