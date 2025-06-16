@@ -24,10 +24,7 @@ axelor {
 ext.aosVersion = '8.2.0'
 
 dependencies {
-
-    api "com.axelor:axelor-guardian:2.3.+"
 	api "com.axelor.apps:axelor-project:${aosVersion}"
-
 }
 
 //
