@@ -1,7 +1,7 @@
 ---
 name: Mattermost
 code: mattermost
-typeSelect: enterprise
+typeSelect: standard
 installOrder: 5000
 description: |
   Mattermost configuration
