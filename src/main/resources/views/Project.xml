@@ -24,7 +24,7 @@
   </form>
 
 
-  <action-group name="action-project-group-on-save">
+  <action-group id="action-project-group-on-save-mattermost" name="action-project-group-on-save">
     <action name="action-project-method-check-resource-availibility"/>
     <action name="save"/>
     <action name="action-project-method-sync-mattermost"/>
