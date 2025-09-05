@@ -3,8 +3,11 @@ plugins {
 }
 
 apply from: "version.gradle"
-if(!file("../../gradle/style.gradle").exists()) {
-    apply from: 'gradle/style.gradle'
+
+try {
+    tasks.named('spotlessCheck')
+} catch (UnknownTaskException ignored) {
+    apply from: './gradle/style.gradle'
 }
 
 java {
@@ -20,10 +23,14 @@ axelor {
 	description "Axelor Mattermost"
 }
 
-ext.aosVersion = '8.3.11'
+ext.aosVersion = '8.4.0'
 
 dependencies {
-	api "com.axelor.apps:axelor-project:${aosVersion}"
+    if (findProject(':modules:axelor-project') != null) {
+        api project(':modules:axelor-project')
+    } else {
+        implementation "com.axelor.apps:axelor-project:${aosVersion}"
+    }
 }
 
 apply plugin: 'maven-publish'
