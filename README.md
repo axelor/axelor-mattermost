@@ -7,8 +7,9 @@ This entreprise module add Mattermost management on Axelor Open Suite with teams
 ## Dependencies compatibility
 
 | Axelor Mattermost module | Compatible from AOS version | Compatible to AOS version |
-| ------------------------ | --------------------------- | ------------------------- |
-| 8.0                      | 8.2                         | -                         |
+|--------------------------|----------------------------|---------------------------|
+| 8.0                      | 8.4                        | 8.4.+                     |
+| 8.1                      | 8.5                        | -                         |
 
 axelor-project is required for mattermost to work
 
