@@ -65,9 +65,12 @@ public class MattermostRestUser extends MattermostRest {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("email", email);
     StringJoiner userName = new StringJoiner("_");
+
     userName.add(MattermostHelper.normalize(firstName));
     userName.add(MattermostHelper.normalize(name));
-    userName.add(String.valueOf(id));
+    if (id != null) {
+      userName.add(String.valueOf(id));
+    }
     StringJoiner nickName = new StringJoiner(" ");
     nickName.add(MattermostHelper.normalize(firstName));
     nickName.add(MattermostHelper.normalize(name));
