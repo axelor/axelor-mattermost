@@ -101,6 +101,17 @@ public class MattermostServiceImpl implements MattermostService {
     }
   }
 
+  @Override
+  public String createUser(String name, String firstName, String email, String password) {
+    try {
+      initialize();
+      return new MattermostRestUser(url, token).createUser(null, email, firstName, name, password);
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
+      return null;
+    }
+  }
+
   @Transactional(rollbackOn = Exception.class)
   protected void saveUser(User user) {
 
