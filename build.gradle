@@ -40,6 +40,11 @@ dependencies {
     } else {
         implementation "com.axelor.apps:axelor-project:${aosVersion}"
     }
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
 
 apply plugin: 'maven-publish'
