@@ -23,4 +23,6 @@ public interface MattermostService {
   Long getUnreadMessage(String userId) throws AxelorException, IOException, JSONException;
 
   void deleteUser(String mattermostUserId) throws AxelorException, IOException, JSONException;
+
+  String createUser(String name, String firstName, String email, String password);
 }
