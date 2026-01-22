@@ -1,7 +1,7 @@
 package com.axelor.apps.mattermost.mattermost.dto;
 
 import com.axelor.utils.api.RequestStructure;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
