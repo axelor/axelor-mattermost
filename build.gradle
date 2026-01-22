@@ -15,7 +15,7 @@ try {
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(11)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -40,11 +40,12 @@ dependencies {
     } else {
         implementation "com.axelor.apps:axelor-project:${aosVersion}"
     }
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    implementation 'com.github.groovy-wslite:groovy-wslite:1.1.3'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    testCompileOnly 'org.projectlombok:lombok:1.18.24'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 }
 
 apply plugin: 'maven-publish'
