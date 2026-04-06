@@ -23,4 +23,6 @@
 "Url mattermost",,,
 "User",,,
 "User %s has no email.",,,
-"User created.","Utilisateur crée.",,
+"User created.","Utilisateur créé.",
+"Add user to Mattermost team automatically","Ajouter automatiquement l'utilisateur à une team Mattermost",
+"Mattermost Team ID for new users","ID de la team Mattermost pour les nouveaux utilisateurs",,

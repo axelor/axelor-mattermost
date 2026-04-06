@@ -14,6 +14,15 @@ public class MattermostRestLinker extends MattermostRest {
     super(url, token);
   }
 
+  public void addUserToTeam(String userId, String teamId) throws AxelorException {
+    createHttpClient();
+    try {
+      linkUserToTeam(userId, teamId);
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
+    }
+  }
+
   public void linkUsersToTeamAndChannel(String userId, String teamId, String channelId) {
     try {
       linkUser(userId, teamId, channelId);
