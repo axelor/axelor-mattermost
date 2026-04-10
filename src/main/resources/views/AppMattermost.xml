@@ -16,7 +16,7 @@
       <button name="initializeMattermost" title="Initialize mattermost"
         onClick="save,action-method-initialize-mattemost" hideIf="teamId"/>
       <field name="addUserToMattermostTeam"/>
-      <field name="mattermostTeamIdForNewUsers" showIf="addUserToMattermostTeam"/>
+      <field name="mattermostTeamNameForNewUsers" showIf="addUserToMattermostTeam"/>
     </panel>
   </form>
 

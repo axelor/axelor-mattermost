@@ -14,7 +14,7 @@
     <string name="teamId" title="Team id"/>
     <boolean name="addUserToMattermostTeam"
       title="Add user to Mattermost team automatically" default="false"/>
-    <string name="mattermostTeamIdForNewUsers" title="Mattermost Team ID for new users"/>
+    <string name="mattermostTeamNameForNewUsers" title="Mattermost Team name for new users"/>
   </entity>
 
 </domain-models>

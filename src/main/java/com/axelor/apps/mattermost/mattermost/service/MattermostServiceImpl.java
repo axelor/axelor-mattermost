@@ -121,9 +121,13 @@ public class MattermostServiceImpl implements MattermostService {
     try {
       AppMattermost appMattermost = appMattermostService.getAppMattermost();
       if (Boolean.TRUE.equals(appMattermost.getAddUserToMattermostTeam())
-          && ObjectUtils.notEmpty(appMattermost.getMattermostTeamIdForNewUsers())) {
-        new MattermostRestLinker(url, token)
-            .addUserToTeam(userId, appMattermost.getMattermostTeamIdForNewUsers());
+          && ObjectUtils.notEmpty(appMattermost.getMattermostTeamNameForNewUsers())) {
+        String teamId =
+            new MattermostRestTeam(url, token)
+                .getTeamIdByName(appMattermost.getMattermostTeamNameForNewUsers());
+        if (ObjectUtils.notEmpty(teamId)) {
+          new MattermostRestLinker(url, token).addUserToTeam(userId, teamId);
+        }
       }
     } catch (Exception e) {
       TraceBackService.trace(e, "mattermost");

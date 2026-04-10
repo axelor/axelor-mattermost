@@ -32,6 +32,13 @@ public class MattermostRestTeam extends MattermostRest {
     }
   }
 
+  public String getTeamIdByName(String name)
+      throws AxelorException, ClientProtocolException, IOException, JSONException {
+    createHttpClient();
+    return getObjectId(
+        getUrl(GET_TEAM_END_POINT.replace("{team_name}", MattermostHelper.computeName(name))));
+  }
+
   public void deleteTeam(String name) {
     createHttpClient();
     try {
