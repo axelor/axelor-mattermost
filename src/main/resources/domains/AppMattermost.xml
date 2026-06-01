@@ -12,6 +12,9 @@
     <string name="mattermostToken" password="true" title="Token mattermost"/>
     <string name="tenantName" title="Tenant name"/>
     <string name="teamId" title="Team id"/>
+    <boolean name="addUserToMattermostTeam"
+      title="Add user to Mattermost team automatically" default="false"/>
+    <string name="mattermostTeamNameForNewUsers" title="Mattermost Team name for new users"/>
   </entity>
 
 </domain-models>

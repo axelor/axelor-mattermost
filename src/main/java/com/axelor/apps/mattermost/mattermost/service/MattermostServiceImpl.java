@@ -105,10 +105,32 @@ public class MattermostServiceImpl implements MattermostService {
   public String createUser(String name, String firstName, String email, String password) {
     try {
       initialize();
-      return new MattermostRestUser(url, token).createUser(null, email, firstName, name, password);
+      String userId =
+          new MattermostRestUser(url, token).createUser(null, email, firstName, name, password);
+      if (ObjectUtils.notEmpty(userId)) {
+        addUserToTeamIfConfigured(userId);
+      }
+      return userId;
     } catch (Exception e) {
       TraceBackService.trace(e, "mattermost");
       return null;
+    }
+  }
+
+  protected void addUserToTeamIfConfigured(String userId) {
+    try {
+      AppMattermost appMattermost = appMattermostService.getAppMattermost();
+      if (Boolean.TRUE.equals(appMattermost.getAddUserToMattermostTeam())
+          && ObjectUtils.notEmpty(appMattermost.getMattermostTeamNameForNewUsers())) {
+        String teamId =
+            new MattermostRestTeam(url, token)
+                .getTeamIdByName(appMattermost.getMattermostTeamNameForNewUsers());
+        if (ObjectUtils.notEmpty(teamId)) {
+          new MattermostRestLinker(url, token).addUserToTeam(userId, teamId);
+        }
+      }
+    } catch (Exception e) {
+      TraceBackService.trace(e, "mattermost");
     }
   }
 
